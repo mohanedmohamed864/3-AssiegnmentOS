@@ -1,61 +1,77 @@
-
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class WaitingRoom {
 
     private final Queue<Patient> queue = new LinkedList<>();
-
     private final Semaphore emptySeats;
     private final Semaphore fullSeats;
     private final Semaphore mutex = new Semaphore(1);
 
     public WaitingRoom(int capacity) {
-
         emptySeats = new Semaphore(capacity);
         fullSeats = new Semaphore(0);
     }
 
-    // Patient enters the waiting room
     public void put(Patient p) throws InterruptedException {
 
-        if (!emptySeats.tryAcquire(0)) {
-
-            Hospital.log("The waiting room is full.");
-
-            Hospital.log(p.getPatientName()
-                    + " is waiting outside for an available seat.");
-
-            emptySeats.acquire();
-        }
-
-        mutex.acquire();
+        boolean seatAcquired = false;
+        boolean mutexAcquired = false;
+        boolean patientAdded = false;
 
         try {
+            // Try to get an available seat immediately.
+            seatAcquired = emptySeats.tryAcquire(0);
+
+            // If the waiting room is full, wait for an empty seat.
+            if (!seatAcquired) {
+
+                Output.print("WAITING", "Waiting room is full.");
+
+                Output.print("OUTSIDE",
+                        p.getPatientName()
+                                + " is waiting outside for an available seat.");
+
+                emptySeats.acquire();
+                seatAcquired = true;
+            }
+
+            // Lock the queue before modifying it.
+            mutex.acquire();
+            mutexAcquired = true;
 
             queue.add(p);
+            patientAdded = true;
 
-            Hospital.log(p.getPatientName()
-                    + " entered the waiting room.");
+            Output.print("ADMITTED",
+                    p.getPatientName() + " entered the waiting room.");
 
         } finally {
 
-            mutex.release();
-            fullSeats.release();
+            // Always release the mutex if it was acquired.
+            if (mutexAcquired) {
+                mutex.release();
+            }
+
+            if (patientAdded) {
+                fullSeats.release();
+
+            } else if (seatAcquired) {
+                // Return the reserved seat if the patient was not added.
+                emptySeats.release();
+            }
         }
     }
 
-    // Doctor takes a patient
     public Patient take() throws InterruptedException {
 
         fullSeats.acquire();
 
-        boolean locked = false;
+        boolean mutexAcquired = false;
 
         try {
-
             mutex.acquire();
-            locked = true;
+            mutexAcquired = true;
 
             Patient p = queue.poll();
 
@@ -70,7 +86,7 @@ public class WaitingRoom {
 
         } finally {
 
-            if (locked) {
+            if (mutexAcquired) {
                 mutex.release();
             }
         }
