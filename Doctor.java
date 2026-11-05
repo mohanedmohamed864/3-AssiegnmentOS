@@ -96,7 +96,7 @@ public class Doctor extends Thread {
                     name() + " begins treating "
                             + patient.getPatientName() + ".");
 
-            Thread.sleep(3000 + random.nextInt(2001));
+            Thread.sleep(1000 + random.nextInt(4001));
 
             completed = true;
 
