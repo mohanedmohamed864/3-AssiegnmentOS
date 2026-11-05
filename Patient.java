@@ -1,8 +1,6 @@
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class Patient extends Thread {
 
-    private static final AtomicInteger treatedCount = new AtomicInteger(0);
+    private static int treatedCount = 0;
 
     private final int id;
     private final WaitingRoom waitingRoom;
@@ -13,7 +11,7 @@ public class Patient extends Thread {
         this.waitingRoom = waitingRoom;
     }
 
-    public int getId2() {
+    public int getPatientId() {
         return id;
     }
 
@@ -21,18 +19,24 @@ public class Patient extends Thread {
         return "P" + id;
     }
 
-    public void finishTreatment() {
-        treatedCount.incrementAndGet();
-        treated.release();
+    public static synchronized void addTreated() {
+        treatedCount++;
     }
 
-    public static int getTreatedCount() {
-        return treatedCount.get();
+    public static synchronized int getTreatedCount() {
+        return treatedCount;
+    }
+
+    public void finishTreatment() {
+        addTreated();
+        treated.release();
     }
 
     @Override
     public void run() {
+
         try {
+
             Output.print("ARRIVAL", getPatientName() + " has arrived.");
 
             waitingRoom.put(this);

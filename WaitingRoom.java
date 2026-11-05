@@ -20,10 +20,9 @@ public class WaitingRoom {
         boolean patientAdded = false;
 
         try {
-            // Try to get an available seat immediately.
+
             seatAcquired = emptySeats.tryAcquire(0);
 
-            // If the waiting room is full, wait for an empty seat.
             if (!seatAcquired) {
 
                 Output.print("WAITING", "Waiting room is full.");
@@ -36,7 +35,7 @@ public class WaitingRoom {
                 seatAcquired = true;
             }
 
-            // Lock the queue before modifying it.
+            
             mutex.acquire();
             mutexAcquired = true;
 
@@ -48,7 +47,6 @@ public class WaitingRoom {
 
         } finally {
 
-            // Always release the mutex if it was acquired.
             if (mutexAcquired) {
                 mutex.release();
             }
@@ -57,7 +55,6 @@ public class WaitingRoom {
                 fullSeats.release();
 
             } else if (seatAcquired) {
-                // Return the reserved seat if the patient was not added.
                 emptySeats.release();
             }
         }
@@ -83,6 +80,14 @@ public class WaitingRoom {
             emptySeats.release();
 
             return p;
+
+        } catch (InterruptedException e) {
+
+            if (!mutexAcquired) {
+                fullSeats.release();
+            }
+
+            throw e;
 
         } finally {
 

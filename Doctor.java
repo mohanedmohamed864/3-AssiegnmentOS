@@ -21,7 +21,9 @@ public class Doctor extends Thread {
 
     @Override
     public void run() {
+
         try {
+
             while (!Thread.currentThread().isInterrupted()) {
 
                 Patient patient = waitingRoom.take();
@@ -55,6 +57,7 @@ public class Doctor extends Thread {
         boolean gotRoom;
 
         try {
+
             gotRoom = treatmentRooms.tryAcquire(TIMEOUT_MS);
 
         } catch (InterruptedException e) {
@@ -63,6 +66,7 @@ public class Doctor extends Thread {
                     name() + " was interrupted while waiting for a treatment room.");
 
             returnPatient(patient);
+
             Thread.currentThread().interrupt();
             return;
         }
@@ -84,6 +88,7 @@ public class Doctor extends Thread {
         boolean completed = false;
 
         try {
+
             Output.print("ROOM",
                     name() + " acquired a treatment room.");
 
@@ -101,9 +106,10 @@ public class Doctor extends Thread {
                     name() + " was interrupted while treating "
                             + patient.getPatientName() + ".");
 
-           } finally {
+        } finally {
 
             if (completed) {
+
                 Output.print("COMPLETED",
                         name() + " finished treating "
                                 + patient.getPatientName() + ".");
@@ -127,6 +133,7 @@ public class Doctor extends Thread {
                             + " back to the waiting room.");
 
             returnPatient(patient);
+
             Thread.currentThread().interrupt();
         }
     }
@@ -136,11 +143,14 @@ public class Doctor extends Thread {
         boolean interrupted = false;
 
         while (true) {
+
             try {
+
                 waitingRoom.put(patient);
                 break;
 
             } catch (InterruptedException e) {
+
                 interrupted = true;
             }
         }
